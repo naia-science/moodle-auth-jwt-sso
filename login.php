@@ -1,20 +1,20 @@
 <?php
 // This plugin's own login page: a self-contained Firebase email/password
 // form. Offered as a "Log in with Firebase" option on Moodle's native login
-// page via auth_plugin_jwt_sso::loginpage_idp_list(). On success it redirects
+// page via auth_plugin_firebase::loginpage_idp_list(). On success it redirects
 // back to $wantsurl with a fresh Firebase ID token attached, which
 // pre_loginpage_hook() then verifies as usual.
 require_once(__DIR__ . '/../../config.php');
 
 $wantsurl = optional_param('wantsurl', $CFG->wwwroot, PARAM_LOCALURL);
 
-$projectid = get_config('auth_jwt_sso', 'firebase_project_id');
-$apikey = get_config('auth_jwt_sso', 'firebase_api_key');
-$authdomain = get_config('auth_jwt_sso', 'firebase_auth_domain');
-$appid = get_config('auth_jwt_sso', 'firebase_app_id');
-$recaptchakey = get_config('auth_jwt_sso', 'recaptcha_enterprise_key');
-$appcheckdebugtoken = get_config('auth_jwt_sso', 'appcheck_debug_token');
-$tokenparam = get_config('auth_jwt_sso', 'token_param') ?: 'token';
+$projectid = get_config('auth_firebase', 'firebase_project_id');
+$apikey = get_config('auth_firebase', 'firebase_api_key');
+$authdomain = get_config('auth_firebase', 'firebase_auth_domain');
+$appid = get_config('auth_firebase', 'firebase_app_id');
+$recaptchakey = get_config('auth_firebase', 'recaptcha_enterprise_key');
+$appcheckdebugtoken = get_config('auth_firebase', 'appcheck_debug_token');
+$tokenparam = get_config('auth_firebase', 'token_param') ?: 'token';
 
 // The App Check debug token disables attestation, so only ever honour it on a
 // site running in developer-debug mode - never on a production instance, even
@@ -27,15 +27,15 @@ if (empty($CFG->debugdeveloper)) {
 // </script> (or other markup) breakout impossible regardless of their content.
 $jsflags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
 
-$PAGE->set_url('/auth/jwt_sso/login.php');
+$PAGE->set_url('/auth/firebase/login.php');
 $PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout('login');
-$PAGE->set_title(get_string('loginwithfirebase', 'auth_jwt_sso'));
+$PAGE->set_title(get_string('loginwithfirebase', 'auth_firebase'));
 
 echo $OUTPUT->header();
 
 if (empty($projectid) || empty($apikey)) {
-    echo $OUTPUT->notification(get_string('loginpage_missingconfig', 'auth_jwt_sso'), 'error');
+    echo $OUTPUT->notification(get_string('loginpage_missingconfig', 'auth_firebase'), 'error');
     echo $OUTPUT->footer();
     die;
 }

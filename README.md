@@ -42,7 +42,7 @@ there is no shared secret to manage or backend token-minting step involved.
 ### 1. Clone the Repository
 ```sh
 cd /path/to/moodle/auth
-git clone https://github.com/naia-science/moodle-auth-jwt-sso jwt_sso
+git clone https://github.com/naia-science/moodle-auth-jwt-sso firebase
 ```
 
 ### 2. Enable the Plugin
@@ -75,7 +75,7 @@ other plugin.
 
 ## Usage
 Users log in through the "Log in with Firebase" option on Moodle's native
-login page (see `auth_plugin_jwt_sso::loginpage_idp_list()`), which leads to
+login page (see `auth_plugin_firebase::loginpage_idp_list()`), which leads to
 this plugin's own `login.php` — a self-contained Firebase email/password form.
 On a successful Firebase sign-in, the page auto-submits the fresh ID token to
 the originally requested page via a **POST**, where `pre_loginpage_hook()`
@@ -101,7 +101,7 @@ deliberately not supported, so the token never travels in a URL.
   check `email_verified` either), so any account that can sign in to Firebase
   can SSO into Moodle and get provisioned.
 - Because email isn't verified, SSO **only ever logs into or provisions
-  accounts with `auth = 'jwt_sso'`**. If a Moodle account with the same email
+  accounts with `auth = 'firebase'`**. If a Moodle account with the same email
   already exists under a different auth method (manual, self-registration,
   etc.), the SSO login is refused rather than taking that account over -
   otherwise anyone could self-register a Firebase account with someone

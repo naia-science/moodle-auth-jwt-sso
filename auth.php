@@ -4,9 +4,9 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->libdir . '/authlib.php');
 require_once($CFG->libdir . '/filelib.php');
 require_once($CFG->dirroot . '/user/lib.php');
-require_once($CFG->dirroot . '/auth/jwt_sso/lib/php-jwt/src/JWT.php');
-require_once($CFG->dirroot . '/auth/jwt_sso/lib/php-jwt/src/Key.php');
-require_once($CFG->dirroot . '/auth/jwt_sso/lib/php-jwt/src/JWK.php');
+require_once($CFG->dirroot . '/auth/firebase/lib/php-jwt/src/JWT.php');
+require_once($CFG->dirroot . '/auth/firebase/lib/php-jwt/src/Key.php');
+require_once($CFG->dirroot . '/auth/firebase/lib/php-jwt/src/JWK.php');
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\JWK;
@@ -15,14 +15,14 @@ use Firebase\JWT\JWK;
  * Logs a user in from a Firebase ID token passed on the URL, provisioning
  * their Moodle account on first sign-in if it doesn't exist yet.
  */
-class auth_plugin_jwt_sso extends auth_plugin_base {
+class auth_plugin_firebase extends auth_plugin_base {
 
     /** Google's published JWKS for verifying Firebase ID tokens. */
     const JWKS_URL = 'https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com';
 
     public function __construct() {
-        $this->authtype = 'jwt_sso';
-        $this->config = get_config('auth_jwt_sso');
+        $this->authtype = 'firebase';
+        $this->config = get_config('auth_firebase');
     }
 
     public function pre_loginpage_hook() {
@@ -34,7 +34,7 @@ class auth_plugin_jwt_sso extends auth_plugin_base {
 
         $projectid = trim($this->config->firebase_project_id ?? '');
         if ($projectid === '') {
-            debugging('auth_jwt_sso: firebase_project_id is not configured.', DEBUG_NORMAL);
+            debugging('auth_firebase: firebase_project_id is not configured.', DEBUG_NORMAL);
             return;
         }
 
@@ -59,25 +59,25 @@ class auth_plugin_jwt_sso extends auth_plugin_base {
         }
 
         if (empty($claims->email)) {
-            debugging('auth_jwt_sso: token has no email claim.', DEBUG_NORMAL);
+            debugging('auth_firebase: token has no email claim.', DEBUG_NORMAL);
             return;
         }
 
         $email = strtolower($claims->email);
         try {
             $user = \core_user::get_user_by_email($email);
-            if ($user && $user->auth !== 'jwt_sso') {
+            if ($user && $user->auth !== 'firebase') {
                 // This email belongs to an existing account created through a
                 // different auth method - never auto-login/take it over via
                 // SSO, since nothing here proves the caller owns that email.
-                debugging('auth_jwt_sso: ' . $email . ' belongs to an existing non-jwt_sso account; refusing SSO login.', DEBUG_NORMAL);
+                debugging('auth_firebase: ' . $email . ' belongs to an existing non-firebase account; refusing SSO login.', DEBUG_NORMAL);
                 return;
             }
             if (!$user) {
                 $user = $this->provision_user($email, $claims);
             }
         } catch (\Exception $e) {
-            debugging('auth_jwt_sso: failed to find/provision user for ' . $email . ': ' . $e->getMessage(), DEBUG_NORMAL);
+            debugging('auth_firebase: failed to find/provision user for ' . $email . ': ' . $e->getMessage(), DEBUG_NORMAL);
             return;
         }
         if (!$user || $user->deleted || $user->suspended) {
@@ -106,20 +106,20 @@ class auth_plugin_jwt_sso extends auth_plugin_base {
             JWT::$leeway = 5;
             $decoded = JWT::decode($token, $keyset);
         } catch (\Exception $e) {
-            debugging('auth_jwt_sso: token verification failed: ' . $e->getMessage(), DEBUG_NORMAL);
+            debugging('auth_firebase: token verification failed: ' . $e->getMessage(), DEBUG_NORMAL);
             return null;
         }
 
         $expectedissuer = 'https://securetoken.google.com/' . $projectid;
         if (($decoded->iss ?? null) !== $expectedissuer || ($decoded->aud ?? null) !== $projectid) {
-            debugging('auth_jwt_sso: token issuer/audience does not match configured Firebase project.', DEBUG_NORMAL);
+            debugging('auth_firebase: token issuer/audience does not match configured Firebase project.', DEBUG_NORMAL);
             return null;
         }
 
         // Firebase requires a non-empty subject (the user's uid). A token
         // without it is not a valid ID token.
         if (!is_string($decoded->sub ?? null) || trim($decoded->sub) === '') {
-            debugging('auth_jwt_sso: token has no valid sub (uid) claim.', DEBUG_NORMAL);
+            debugging('auth_firebase: token has no valid sub (uid) claim.', DEBUG_NORMAL);
             return null;
         }
 
@@ -131,7 +131,7 @@ class auth_plugin_jwt_sso extends auth_plugin_base {
      * don't hit Google on every login attempt.
      */
     private function get_firebase_jwks(): array {
-        $cache = \cache::make('auth_jwt_sso', 'jwks');
+        $cache = \cache::make('auth_firebase', 'jwks');
         $jwks = $cache->get('keyset');
         if ($jwks !== false) {
             return $jwks;
@@ -140,12 +140,12 @@ class auth_plugin_jwt_sso extends auth_plugin_base {
         $curl = new \curl();
         $response = $curl->get(self::JWKS_URL);
         if ($curl->get_errno() || empty($response)) {
-            throw new \moodle_exception('jwksfetchfailed', 'auth_jwt_sso');
+            throw new \moodle_exception('jwksfetchfailed', 'auth_firebase');
         }
 
         $jwks = json_decode($response, true);
         if (!is_array($jwks) || empty($jwks['keys'])) {
-            throw new \moodle_exception('jwksinvalid', 'auth_jwt_sso');
+            throw new \moodle_exception('jwksinvalid', 'auth_firebase');
         }
 
         $cache->set('keyset', $jwks);
@@ -165,7 +165,7 @@ class auth_plugin_jwt_sso extends auth_plugin_base {
         $localpart = explode('@', $email)[0];
 
         $newuser = (object) [
-            'auth' => 'jwt_sso',
+            'auth' => 'firebase',
             'username' => $this->generate_username($email),
             'email' => $email,
             'confirmed' => 1,
@@ -236,8 +236,8 @@ class auth_plugin_jwt_sso extends auth_plugin_base {
         $label = trim($this->config->login_button_label ?? '');
 
         return [[
-            'url' => new \moodle_url('/auth/jwt_sso/login.php', ['wantsurl' => $wantsurl]),
-            'name' => $label !== '' ? $label : get_string('loginwithfirebase', 'auth_jwt_sso'),
+            'url' => new \moodle_url('/auth/firebase/login.php', ['wantsurl' => $wantsurl]),
+            'name' => $label !== '' ? $label : get_string('loginwithfirebase', 'auth_firebase'),
         ]];
     }
 }
