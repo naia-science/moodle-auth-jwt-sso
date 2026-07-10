@@ -49,8 +49,8 @@ class auth_plugin_jwt_sso extends auth_plugin_base {
             return;
         }
 
-        if (empty($claims->email) || empty($claims->email_verified)) {
-            debugging('auth_jwt_sso: token has no verified email claim.', DEBUG_NORMAL);
+        if (empty($claims->email)) {
+            debugging('auth_jwt_sso: token has no email claim.', DEBUG_NORMAL);
             return;
         }
 
@@ -139,6 +139,7 @@ class auth_plugin_jwt_sso extends auth_plugin_base {
 
         $name = trim((string) ($claims->name ?? ''));
         $parts = $name !== '' ? preg_split('/\s+/', $name, 2) : [];
+        $localpart = explode('@', $email)[0];
 
         $newuser = (object) [
             'auth' => 'jwt_sso',
@@ -146,7 +147,7 @@ class auth_plugin_jwt_sso extends auth_plugin_base {
             'email' => $email,
             'confirmed' => 1,
             'mnethostid' => $CFG->mnet_localhost_id,
-            'firstname' => $parts[0] ?? $email,
+            'firstname' => $parts[0] ?? $localpart,
             'lastname' => $parts[1] ?? '.',
             'password' => AUTH_PASSWORD_NOT_CACHED,
         ];

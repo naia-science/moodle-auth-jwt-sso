@@ -43,18 +43,20 @@ token (from `firebase.auth().currentUser.getIdToken()`) attached:
 ```
 https://yourmoodle.com/course/view.php?id=2&token=<firebase_id_token>
 ```
-If the token is valid (signature, issuer, audience, verified email), the user
-is logged in — creating their Moodle account first if this is their first
-visit — and redirected to the requested page. If the token is missing or
-invalid, Moodle proceeds with its normal login process.
+If the token is valid (signature, issuer, audience, has an email claim), the
+user is logged in — creating their Moodle account first if this is their
+first visit — and redirected to the requested page. If the token is missing
+or invalid, Moodle proceeds with its normal login process.
 
 ## Security Considerations
 - Always use HTTPS — the token is a bearer credential while in flight and
   while it sits in the URL (browser history, referrer headers, access logs).
 - Firebase ID tokens are short-lived (~1 hour) and the plugin honors their
   `exp`/`iat` claims; there's no separate expiry to configure.
-- Only tokens with a *verified* email are accepted — unverified emails
-  cannot log in or trigger account provisioning.
+- Email verification is *not* checked — matching the trust model the rest of
+  the Firebase-backed system already uses (the main app's backend doesn't
+  check `email_verified` either), so any account that can sign in to Firebase
+  can SSO into Moodle and get provisioned.
 - No entitlement check is performed: any user with a valid Firebase account
   for the configured project gets a Moodle account. This is intentional for
   this deployment; add a check in `provision_user()`/`pre_loginpage_hook()`
