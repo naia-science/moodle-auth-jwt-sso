@@ -4,11 +4,11 @@ defined('MOODLE_INTERNAL') || die();
 if ($hassiteconfig) {
     $settings = new admin_settingpage('auth_jwt_sso', get_string('pluginname', 'auth_jwt_sso'));
 
-    // Secret Key Setting
+    // Firebase project ID (used to validate the token's issuer/audience).
     $settings->add(new admin_setting_configtext(
-        'auth_jwt_sso/secretkey',
-        get_string('secretkey', 'auth_jwt_sso'),
-        get_string('secretkey_desc', 'auth_jwt_sso'),
+        'auth_jwt_sso/firebase_project_id',
+        get_string('firebaseprojectid', 'auth_jwt_sso'),
+        get_string('firebaseprojectid_desc', 'auth_jwt_sso'),
         '',
         PARAM_TEXT
     ));
