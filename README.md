@@ -51,7 +51,7 @@ git clone https://github.com/naia-science/moodle-auth-jwt-sso jwt_sso
 3. Enable `Firebase SSO Authentication`.
 4. Configure the plugin settings:
    - **Firebase project ID:** the Firebase project whose ID tokens should be accepted.
-   - **Token Parameter Name:** the URL parameter carrying the Firebase ID token (default: `token`).
+   - **Token Parameter Name:** the name of the POST field carrying the Firebase ID token (default: `token`).
    - **Firebase API key / auth domain / app ID:** the Firebase project's web
      app config, used only by this plugin's own `login.php` (client-side).
      Not secret by Firebase's own design, but kept in Moodle's config DB
@@ -74,30 +74,26 @@ translation automatically based on the site's/user's language, same as any
 other plugin.
 
 ## Usage
-Two ways a user ends up logged in:
+Users log in through the "Log in with Firebase" option on Moodle's native
+login page (see `auth_plugin_jwt_sso::loginpage_idp_list()`), which leads to
+this plugin's own `login.php` — a self-contained Firebase email/password form.
+On a successful Firebase sign-in, the page auto-submits the fresh ID token to
+the originally requested page via a **POST**, where `pre_loginpage_hook()`
+verifies it.
 
-**Already has a Firebase session elsewhere** (e.g. another app using the same
-Firebase project): redirect them to a Moodle URL with a fresh ID token
-(from `firebase.auth().currentUser.getIdToken()`) attached:
-```
-https://yourmoodle.com/course/view.php?id=2&token=<firebase_id_token>
-```
+If the token is valid (signature, issuer, audience, has an email claim), the
+user is logged in — creating their Moodle account first if this is their first
+visit — and redirected to the originally requested page. If the token is
+missing or invalid, Moodle proceeds with its normal login process.
 
-**Arrives at Moodle directly**, with no token: Moodle's login page shows a
-"Log in with Firebase" option (see `auth_plugin_jwt_sso::loginpage_idp_list()`)
-that leads to this plugin's own `login.php` - a self-contained email/password
-form. On success it redirects back with a fresh token, landing in the same
-flow as above.
-
-In both cases, if the token is valid (signature, issuer, audience, has an
-email claim), the user is logged in — creating their Moodle account first if
-this is their first visit — and redirected to the originally requested page.
-If the token is missing or invalid, Moodle proceeds with its normal login
-process.
+The token is **only** accepted on a POST. Driving a login by placing a token in
+a URL — a deep link from another app, or a bookmarked/shared link — is
+deliberately not supported, so the token never travels in a URL.
 
 ## Security Considerations
-- Always use HTTPS — the token is a bearer credential while in flight and
-  while it sits in the URL (browser history, referrer headers, access logs).
+- Always use HTTPS — the token is a bearer credential while in flight. It is
+  submitted by POST and never placed in a URL, so it does not leak through
+  browser history, referrer headers or access logs.
 - Firebase ID tokens are short-lived (~1 hour) and the plugin honors their
   `exp`/`iat` claims; there's no separate expiry to configure.
 - Email verification is *not* checked — matching the trust model the rest of
