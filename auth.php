@@ -38,6 +38,15 @@ class auth_plugin_jwt_sso extends auth_plugin_base {
             return;
         }
 
+        // The SSO token is only ever accepted on a POST issued by this
+        // plugin's own login page. This deliberately rules out driving a
+        // login from a token sitting in a GET URL (a bookmarked, shared,
+        // logged or externally-crafted link), so the token never travels in
+        // the address bar or server access logs.
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
+            return;
+        }
+
         $tokenparam = $this->config->token_param ?: 'token';
         $token = optional_param($tokenparam, '', PARAM_RAW);
         if ($token === '') {

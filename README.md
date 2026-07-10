@@ -2,16 +2,22 @@
 
 ## Description
 Moodle authentication plugin for Single Sign-On using Firebase Authentication.
-A Firebase ID token passed on the URL is verified directly against Firebase's
-published signing keys (no shared secret, no intermediary token). Users are
-logged in automatically, and a Moodle account is auto-provisioned on first
-sign-in if none exists yet for that email.
+A Firebase ID token is verified directly against Firebase's published signing
+keys (no shared secret, no intermediary token). Users are logged in
+automatically, and a Moodle account is auto-provisioned on first sign-in if
+none exists yet for that email.
 
-Users who land on Moodle directly (not via a link that already carries a
-token) get a "Log in with Firebase" option on Moodle's native login page,
+Users get a "Log in with Firebase" option on Moodle's native login page,
 served entirely by this plugin (`login.php`) - a self-contained Firebase
 email/password form using Firebase's CDN-hosted Web SDK. No other app or
 service is involved; this plugin does not depend on any other codebase.
+
+On success the login page submits the freshly minted ID token to the target
+page via an auto-submitting **POST** form, which the plugin's
+`pre_loginpage_hook()` then verifies. The token is only ever accepted on a
+POST - it is never read from a URL query parameter - so it does not travel in
+the address bar, browser history or server access logs, and a login cannot be
+driven from a bookmarked, shared or externally-crafted link.
 
 Forked from [karimanouri/moodle-auth_jwt_sso](https://github.com/karimanouri/moodle-auth_jwt_sso),
 which verified a symmetric (HS256) JWT minted by a separate backend. This fork
@@ -25,7 +31,9 @@ there is no shared secret to manage or backend token-minting step involved.
   user may enrol, there is no entitlement/allowlist check.
 - Self-hosted "Log in with Firebase" page for users arriving at Moodle
   directly, with no dependency on any other app.
-- Configurable JWT token parameter name in the URL.
+- The ID token is submitted by POST and only accepted by POST, never via a URL
+  query parameter, so it is never exposed in URLs or access logs.
+- Configurable name for the POSTed token parameter.
 - Redirects users to the originally requested page after authentication.
 - JWKS responses are cached (1 hour) to avoid a Google round-trip on every login.
 

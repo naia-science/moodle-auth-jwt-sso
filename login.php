@@ -97,9 +97,20 @@ if (empty($projectid) || empty($apikey)) {
     auth.signInWithEmailAndPassword(email, password).then(function(cred) {
       return cred.user.getIdToken();
     }).then(function(idToken) {
-      var url = new URL(wantsurl, window.location.origin);
-      url.searchParams.set(tokenparam, idToken);
-      window.location.href = url.toString();
+      // POST the token to the target page (same origin - wantsurl is a
+      // PARAM_LOCALURL path) rather than putting it in the URL, so it never
+      // lands in the address bar, browser history or access logs. The
+      // auth plugin's pre_loginpage_hook only honours the token on a POST.
+      var form = document.createElement('form');
+      form.method = 'POST';
+      form.action = new URL(wantsurl, window.location.origin).toString();
+      var input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = tokenparam;
+      input.value = idToken;
+      form.appendChild(input);
+      document.body.appendChild(form);
+      form.submit();
     }).catch(function(error) {
       errorBox.textContent = error.message;
       errorBox.style.display = 'block';

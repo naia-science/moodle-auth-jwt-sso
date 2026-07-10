@@ -2,8 +2,8 @@
 $string['pluginname'] = 'Authentification SSO Firebase';
 $string['firebaseprojectid'] = 'ID du projet Firebase';
 $string['firebaseprojectid_desc'] = 'Le projet Firebase dont les jetons d\'identité doivent être acceptés. Utilisé pour valider les revendications d\'émetteur et d\'audience du jeton.';
-$string['tokenparam'] = 'Paramètre d\'URL du jeton JWT';
-$string['tokenparam_desc'] = 'Le nom du paramètre d\'URL utilisé pour transmettre le jeton d\'identité Firebase (ex. : token, jwt, auth_token).';
+$string['tokenparam'] = 'Nom du paramètre du jeton';
+$string['tokenparam_desc'] = 'Le nom du champ POST utilisé pour transmettre le jeton d\'identité Firebase à Moodle (ex. : token, jwt, auth_token). Le jeton est transmis par POST et n\'est jamais accepté depuis un paramètre d\'URL.';
 $string['jwksfetchfailed'] = 'Impossible de récupérer les clés de signature Firebase (JWKS).';
 $string['jwksinvalid'] = 'La réponse des clés de signature Firebase (JWKS) est invalide.';
 $string['loginpageheading'] = 'Page de connexion (config Firebase côté client)';
