@@ -96,6 +96,12 @@ process.
   the Firebase-backed system already uses (the main app's backend doesn't
   check `email_verified` either), so any account that can sign in to Firebase
   can SSO into Moodle and get provisioned.
+- Because email isn't verified, SSO **only ever logs into or provisions
+  accounts with `auth = 'jwt_sso'`**. If a Moodle account with the same email
+  already exists under a different auth method (manual, self-registration,
+  etc.), the SSO login is refused rather than taking that account over -
+  otherwise anyone could self-register a Firebase account with someone
+  else's email and hijack their existing Moodle login.
 - No entitlement check is performed: any user with a valid Firebase account
   for the configured project gets a Moodle account. This is intentional for
   this deployment; add a check in `provision_user()`/`pre_loginpage_hook()`

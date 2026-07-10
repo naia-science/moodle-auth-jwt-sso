@@ -57,6 +57,13 @@ class auth_plugin_jwt_sso extends auth_plugin_base {
         $email = strtolower($claims->email);
         try {
             $user = \core_user::get_user_by_email($email);
+            if ($user && $user->auth !== 'jwt_sso') {
+                // This email belongs to an existing account created through a
+                // different auth method - never auto-login/take it over via
+                // SSO, since nothing here proves the caller owns that email.
+                debugging('auth_jwt_sso: ' . $email . ' belongs to an existing non-jwt_sso account; refusing SSO login.', DEBUG_NORMAL);
+                return;
+            }
             if (!$user) {
                 $user = $this->provision_user($email, $claims);
             }
