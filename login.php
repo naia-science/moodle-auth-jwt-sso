@@ -16,6 +16,17 @@ $recaptchakey = get_config('auth_jwt_sso', 'recaptcha_enterprise_key');
 $appcheckdebugtoken = get_config('auth_jwt_sso', 'appcheck_debug_token');
 $tokenparam = get_config('auth_jwt_sso', 'token_param') ?: 'token';
 
+// The App Check debug token disables attestation, so only ever honour it on a
+// site running in developer-debug mode - never on a production instance, even
+// if the setting was left populated by mistake.
+if (empty($CFG->debugdeveloper)) {
+    $appcheckdebugtoken = '';
+}
+
+// Values interpolated into the inline <script> below. JSON_HEX_TAG/AMP make a
+// </script> (or other markup) breakout impossible regardless of their content.
+$jsflags = JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT;
+
 $PAGE->set_url('/auth/jwt_sso/login.php');
 $PAGE->set_context(context_system::instance());
 $PAGE->set_pagelayout('login');
@@ -52,10 +63,10 @@ if (empty($projectid) || empty($apikey)) {
 <script>
 (function() {
   firebase.initializeApp({
-    apiKey: <?php echo json_encode($apikey); ?>,
-    authDomain: <?php echo json_encode($authdomain); ?>,
-    projectId: <?php echo json_encode($projectid); ?>,
-    appId: <?php echo json_encode($appid); ?>
+    apiKey: <?php echo json_encode($apikey, $jsflags); ?>,
+    authDomain: <?php echo json_encode($authdomain, $jsflags); ?>,
+    projectId: <?php echo json_encode($projectid, $jsflags); ?>,
+    appId: <?php echo json_encode($appid, $jsflags); ?>
   });
 
   <?php if (!empty($recaptchakey)): ?>
@@ -63,18 +74,18 @@ if (empty($projectid) || empty($apikey)) {
   // Bypasses reCAPTCHA App Check attestation (e.g. for a test/local domain
   // the reCAPTCHA key isn't registered for). Only takes effect when this
   // setting is explicitly filled in - leave blank in production.
-  self.FIREBASE_APPCHECK_DEBUG_TOKEN = <?php echo json_encode($appcheckdebugtoken); ?>;
+  self.FIREBASE_APPCHECK_DEBUG_TOKEN = <?php echo json_encode($appcheckdebugtoken, $jsflags); ?>;
   <?php endif; ?>
   var appCheck = firebase.appCheck();
   appCheck.activate(
-    new firebase.appCheck.ReCaptchaEnterpriseProvider(<?php echo json_encode($recaptchakey); ?>),
+    new firebase.appCheck.ReCaptchaEnterpriseProvider(<?php echo json_encode($recaptchakey, $jsflags); ?>),
     true
   );
   <?php endif; ?>
 
   var auth = firebase.auth();
-  var wantsurl = <?php echo json_encode($wantsurl); ?>;
-  var tokenparam = <?php echo json_encode($tokenparam); ?>;
+  var wantsurl = <?php echo json_encode($wantsurl, $jsflags); ?>;
+  var tokenparam = <?php echo json_encode($tokenparam, $jsflags); ?>;
 
   document.getElementById('firebase-login-form').addEventListener('submit', function(e) {
     e.preventDefault();

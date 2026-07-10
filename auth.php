@@ -107,6 +107,13 @@ class auth_plugin_jwt_sso extends auth_plugin_base {
             return null;
         }
 
+        // Firebase requires a non-empty subject (the user's uid). A token
+        // without it is not a valid ID token.
+        if (!is_string($decoded->sub ?? null) || trim($decoded->sub) === '') {
+            debugging('auth_jwt_sso: token has no valid sub (uid) claim.', DEBUG_NORMAL);
+            return null;
+        }
+
         return $decoded;
     }
 
@@ -159,7 +166,23 @@ class auth_plugin_jwt_sso extends auth_plugin_base {
             'password' => AUTH_PASSWORD_NOT_CACHED,
         ];
 
-        $newuser->id = user_create_user($newuser, false, true);
+        // generate_username() reads-then-writes, so two concurrent first
+        // sign-ins for distinct emails can pick the same username and one
+        // insert will hit the unique constraint. Retry with a freshly
+        // computed username a few times before giving up.
+        $attempts = 0;
+        while (true) {
+            try {
+                $newuser->id = user_create_user($newuser, false, true);
+                break;
+            } catch (\dml_write_exception $e) {
+                if (++$attempts >= 5) {
+                    throw $e;
+                }
+                $newuser->username = $this->generate_username($email);
+            }
+        }
+
         return \core_user::get_user($newuser->id);
     }
 
