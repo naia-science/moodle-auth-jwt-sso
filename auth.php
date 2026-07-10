@@ -194,9 +194,11 @@ class auth_plugin_jwt_sso extends auth_plugin_base {
             return [];
         }
 
+        $label = trim($this->config->login_button_label ?? '');
+
         return [[
             'url' => new \moodle_url('/auth/jwt_sso/login.php', ['wantsurl' => $wantsurl]),
-            'name' => get_string('loginwithfirebase', 'auth_jwt_sso'),
+            'name' => $label !== '' ? $label : get_string('loginwithfirebase', 'auth_jwt_sso'),
         ]];
     }
 }

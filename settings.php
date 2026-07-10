@@ -27,6 +27,14 @@ if ($hassiteconfig) {
         get_string('loginpageheading_desc', 'auth_jwt_sso')
     ));
 
+    $settings->add(new admin_setting_configtext(
+        'auth_jwt_sso/login_button_label',
+        get_string('loginbuttonlabel', 'auth_jwt_sso'),
+        get_string('loginbuttonlabel_desc', 'auth_jwt_sso'),
+        '',
+        PARAM_TEXT
+    ));
+
     // Firebase Web SDK config, needed client-side to render our own login
     // page (auth/jwt_sso/login.php). These are the same values a Firebase
     // web app config block normally contains - not secret by Firebase's own

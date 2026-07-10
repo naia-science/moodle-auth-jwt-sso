@@ -1,0 +1,24 @@
+<?php
+$string['pluginname'] = 'Authentification SSO Firebase';
+$string['firebaseprojectid'] = 'ID du projet Firebase';
+$string['firebaseprojectid_desc'] = 'Le projet Firebase dont les jetons d\'identité doivent être acceptés. Utilisé pour valider les revendications d\'émetteur et d\'audience du jeton.';
+$string['tokenparam'] = 'Paramètre d\'URL du jeton JWT';
+$string['tokenparam_desc'] = 'Le nom du paramètre d\'URL utilisé pour transmettre le jeton d\'identité Firebase (ex. : token, jwt, auth_token).';
+$string['jwksfetchfailed'] = 'Impossible de récupérer les clés de signature Firebase (JWKS).';
+$string['jwksinvalid'] = 'La réponse des clés de signature Firebase (JWKS) est invalide.';
+$string['loginpageheading'] = 'Page de connexion (config Firebase côté client)';
+$string['loginpageheading_desc'] = 'Les paramètres ci-dessous configurent la page de connexion propre à ce plugin (auth/jwt_sso/login.php), proposée comme option « Se connecter avec Firebase » sur la page de connexion de Moodle. Ce sont les mêmes valeurs que celles d\'une config d\'application web Firebase classique, non secrètes par conception - conservées ici plutôt que dans le code du plugin afin que celui-ci reste générique et réutilisable.';
+$string['loginbuttonlabel'] = 'Libellé du bouton de connexion';
+$string['loginbuttonlabel_desc'] = 'Texte personnalisé pour l\'option de connexion affichée sur la page de connexion de Moodle (ex. : « Se connecter avec mon compte Acme Corp »). Laisser vide pour utiliser le libellé par défaut « Se connecter avec Firebase ».';
+$string['firebaseapikey'] = 'Clé API Firebase';
+$string['firebaseapikey_desc'] = 'Clé API Web issue de la config d\'application web du projet Firebase.';
+$string['firebaseauthdomain'] = 'Domaine d\'authentification Firebase';
+$string['firebaseauthdomain_desc'] = 'Généralement {project-id}.firebaseapp.com.';
+$string['firebaseappid'] = 'ID d\'application Firebase';
+$string['firebaseappid_desc'] = 'L\'ID de l\'application web issu de la config d\'application web du projet Firebase (ex. : 1:123:web:abc).';
+$string['recaptchaenterprisekey'] = 'Clé de site reCAPTCHA Enterprise';
+$string['recaptchaenterprisekey_desc'] = 'Nécessaire uniquement si le projet Firebase impose App Check sur l\'authentification. Laisser vide pour ignorer App Check.';
+$string['appcheckdebugtoken'] = 'Jeton de débogage App Check';
+$string['appcheckdebugtoken_desc'] = 'Contourne l\'attestation reCAPTCHA App Check - utile lorsque le domaine de ce Moodle n\'est pas enregistré auprès de la clé reCAPTCHA Enterprise (ex. : tests locaux ou de préproduction). Doit être enregistré comme jeton de débogage dans la Console Firebase > Paramètres du projet > App Check pour l\'application concernée. Laisser vide en production.';
+$string['loginwithfirebase'] = 'Se connecter avec Firebase';
+$string['loginpage_missingconfig'] = 'Cette page de connexion n\'est pas encore configurée. Un administrateur doit renseigner l\'ID du projet Firebase et la config du SDK Web dans Administration du site > Plugins > Authentification > Authentification SSO Firebase.';

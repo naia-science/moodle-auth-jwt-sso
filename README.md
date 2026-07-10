@@ -51,6 +51,19 @@ git clone https://github.com/naia-science/moodle-auth-jwt-sso jwt_sso
      project.
    - **reCAPTCHA Enterprise site key:** only needed if the Firebase project
      enforces App Check on Authentication. Leave blank to skip App Check.
+   - **App Check debug token:** bypasses reCAPTCHA attestation for a domain
+     the reCAPTCHA key isn't registered for (e.g. local/staging testing).
+     Leave blank in production.
+   - **Login button label:** custom text for the login option on Moodle's
+     login page (e.g. "Log in with your organisation account"). Leave blank
+     for the default "Log in with Firebase". This - like the values above -
+     lives in Moodle's config DB, not in this repo, so branding/company names
+     never end up in source control.
+
+### 3. Localization
+Ships with English and French (`lang/fr/`) string packs. Moodle picks the
+translation automatically based on the site's/user's language, same as any
+other plugin.
 
 ## Usage
 Two ways a user ends up logged in:

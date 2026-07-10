@@ -32,15 +32,15 @@ if (empty($projectid) || empty($apikey)) {
 <div id="firebase-login-app" style="max-width: 360px; margin: 2rem auto;">
   <form id="firebase-login-form">
     <div class="mb-3">
-      <label for="firebase-email">Email</label>
+      <label for="firebase-email"><?php echo get_string('email'); ?></label>
       <input type="email" id="firebase-email" class="form-control" required autocomplete="username">
     </div>
     <div class="mb-3">
-      <label for="firebase-password">Password</label>
+      <label for="firebase-password"><?php echo get_string('password'); ?></label>
       <input type="password" id="firebase-password" class="form-control" required autocomplete="current-password">
     </div>
     <div id="firebase-login-error" class="alert alert-danger" style="display:none"></div>
-    <button type="submit" class="btn btn-primary">Log in</button>
+    <button type="submit" class="btn btn-primary"><?php echo get_string('login'); ?></button>
   </form>
 </div>
 
