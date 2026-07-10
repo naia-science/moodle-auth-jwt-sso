@@ -183,4 +183,20 @@ class auth_plugin_jwt_sso extends auth_plugin_base {
     public function user_login($username, $password) {
         return false;
     }
+
+    /**
+     * Offers a "Log in with Firebase" option on Moodle's native login page,
+     * pointing at this plugin's own login.php (self-contained Firebase Web
+     * SDK login form) rather than any external site.
+     */
+    public function loginpage_idp_list($wantsurl) {
+        if (trim($this->config->firebase_project_id ?? '') === '' || trim($this->config->firebase_api_key ?? '') === '') {
+            return [];
+        }
+
+        return [[
+            'url' => new \moodle_url('/auth/jwt_sso/login.php', ['wantsurl' => $wantsurl]),
+            'name' => get_string('loginwithfirebase', 'auth_jwt_sso'),
+        ]];
+    }
 }
