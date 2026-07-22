@@ -6,7 +6,17 @@
 // pre_loginpage_hook() then verifies as usual.
 require_once(__DIR__ . '/../../config.php');
 
-$wantsurl = optional_param('wantsurl', $CFG->wwwroot, PARAM_LOCALURL);
+$wantsurl = optional_param('wantsurl', '', PARAM_LOCALURL);
+if ($wantsurl === '') {
+    // No specific destination was requested (e.g. reached via a plain "log
+    // in" link rather than being sent here by require_login() for a
+    // specific page). Default to a page that forces a login check - unlike
+    // the site front page, which is public by default on most sites - so
+    // pre_loginpage_hook() (only invoked via require_login()) actually gets
+    // a chance to verify the POSTed token instead of it being silently
+    // dropped on a page nobody ever required login for.
+    $wantsurl = $CFG->wwwroot . '/my/';
+}
 
 $projectid = get_config('auth_firebase', 'firebase_project_id');
 $apikey = get_config('auth_firebase', 'firebase_api_key');
@@ -86,7 +96,6 @@ if (empty($projectid) || empty($apikey)) {
   var auth = firebase.auth();
   var wantsurl = <?php echo json_encode($wantsurl, $jsflags); ?>;
   var tokenparam = <?php echo json_encode($tokenparam, $jsflags); ?>;
-  var loginindexurl = <?php echo json_encode($CFG->wwwroot . '/login/index.php', $jsflags); ?>;
 
   document.getElementById('firebase-login-form').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -98,28 +107,18 @@ if (empty($projectid) || empty($apikey)) {
     auth.signInWithEmailAndPassword(email, password).then(function(cred) {
       return cred.user.getIdToken();
     }).then(function(idToken) {
-      // POST the token to Moodle's own login page rather than wantsurl
-      // directly. pre_loginpage_hook() is only ever invoked by
-      // require_login() or login/index.php itself - posting straight to
-      // wantsurl would silently skip verification whenever wantsurl is a
-      // page that doesn't force a login (e.g. the site front page), leaving
-      // the user logged out with no error. login/index.php reads wantsurl
-      // itself and restores $SESSION->wantsurl, so the final redirect
-      // destination is unaffected. Posted, never placed in the URL, so it
-      // never lands in the address bar, browser history or access logs.
+      // POST the token to the target page (same origin - wantsurl is a
+      // PARAM_LOCALURL path) rather than putting it in the URL, so it never
+      // lands in the address bar, browser history or access logs. The
+      // auth plugin's pre_loginpage_hook only honours the token on a POST.
       var form = document.createElement('form');
       form.method = 'POST';
-      form.action = loginindexurl;
-      var tokeninput = document.createElement('input');
-      tokeninput.type = 'hidden';
-      tokeninput.name = tokenparam;
-      tokeninput.value = idToken;
-      form.appendChild(tokeninput);
-      var wantsurlinput = document.createElement('input');
-      wantsurlinput.type = 'hidden';
-      wantsurlinput.name = 'wantsurl';
-      wantsurlinput.value = wantsurl;
-      form.appendChild(wantsurlinput);
+      form.action = new URL(wantsurl, window.location.origin).toString();
+      var input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = tokenparam;
+      input.value = idToken;
+      form.appendChild(input);
       document.body.appendChild(form);
       form.submit();
     }).catch(function(error) {
