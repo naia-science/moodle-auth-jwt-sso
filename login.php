@@ -86,6 +86,7 @@ if (empty($projectid) || empty($apikey)) {
   var auth = firebase.auth();
   var wantsurl = <?php echo json_encode($wantsurl, $jsflags); ?>;
   var tokenparam = <?php echo json_encode($tokenparam, $jsflags); ?>;
+  var loginindexurl = <?php echo json_encode($CFG->wwwroot . '/login/index.php', $jsflags); ?>;
 
   document.getElementById('firebase-login-form').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -97,18 +98,28 @@ if (empty($projectid) || empty($apikey)) {
     auth.signInWithEmailAndPassword(email, password).then(function(cred) {
       return cred.user.getIdToken();
     }).then(function(idToken) {
-      // POST the token to the target page (same origin - wantsurl is a
-      // PARAM_LOCALURL path) rather than putting it in the URL, so it never
-      // lands in the address bar, browser history or access logs. The
-      // auth plugin's pre_loginpage_hook only honours the token on a POST.
+      // POST the token to Moodle's own login page rather than wantsurl
+      // directly. pre_loginpage_hook() is only ever invoked by
+      // require_login() or login/index.php itself - posting straight to
+      // wantsurl would silently skip verification whenever wantsurl is a
+      // page that doesn't force a login (e.g. the site front page), leaving
+      // the user logged out with no error. login/index.php reads wantsurl
+      // itself and restores $SESSION->wantsurl, so the final redirect
+      // destination is unaffected. Posted, never placed in the URL, so it
+      // never lands in the address bar, browser history or access logs.
       var form = document.createElement('form');
       form.method = 'POST';
-      form.action = new URL(wantsurl, window.location.origin).toString();
-      var input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = tokenparam;
-      input.value = idToken;
-      form.appendChild(input);
+      form.action = loginindexurl;
+      var tokeninput = document.createElement('input');
+      tokeninput.type = 'hidden';
+      tokeninput.name = tokenparam;
+      tokeninput.value = idToken;
+      form.appendChild(tokeninput);
+      var wantsurlinput = document.createElement('input');
+      wantsurlinput.type = 'hidden';
+      wantsurlinput.name = 'wantsurl';
+      wantsurlinput.value = wantsurl;
+      form.appendChild(wantsurlinput);
       document.body.appendChild(form);
       form.submit();
     }).catch(function(error) {
